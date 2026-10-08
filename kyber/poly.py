@@ -107,3 +107,34 @@ def ntt(a):
 
     return result
 
+def mod_inverse(a):
+    """
+    Return the modular inverse of a modulo Q.
+    """
+    return pow(a, Q - 2, Q)
+
+def intt(a):
+    """
+    Educational inverse NTT.
+
+    Recovers the polynomial coefficients from
+    the NTT representation.
+    """
+    result = [0] * N
+    inv_psi = mod_inverse(PSI)
+
+    for j in range(N):
+        total = 0
+
+        for k in range(N):
+            exponent = (2 * j + 1) * k
+            total += a[k] * mod_pow(inv_psi, exponent)
+
+        result[j] = total % Q
+
+    inv_n = mod_inverse(N)
+
+    for j in range(N):
+        result[j] = (result[j] * inv_n) % Q
+
+    return result

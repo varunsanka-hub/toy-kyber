@@ -1,4 +1,4 @@
-from kyber.poly import N, Q, PSI, ntt, schoolbook_mul
+from kyber.poly import N, Q, PSI, intt, ntt, schoolbook_mul
 
 
 def test_x15_times_x():
@@ -25,3 +25,12 @@ def test_ntt_constant():
     expected = [pow(PSI, k, Q) for k in range(N)]
 
     assert result == expected
+
+def test_ntt_round_trip():
+    original = [i for i in range(N)]
+
+    transformed = ntt(original)
+    recovered = intt(transformed)
+
+    assert recovered == original
+
