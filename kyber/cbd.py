@@ -5,6 +5,11 @@ for the educational toy ML-KEM implementation.
 
 import random
 
+from .params import PARAMS
+
+
+N = PARAMS.n
+
 
 def cbd_coefficient(eta=2):
     """
@@ -22,3 +27,15 @@ def cbd_coefficient(eta=2):
     b = sum(random.randint(0, 1) for _ in range(eta))
 
     return a - b
+
+
+def cbd_poly(eta=2):
+    """
+    Generate a polynomial whose coefficients
+    are sampled independently from the CBD.
+    """
+
+    return [
+        cbd_coefficient(eta)
+        for _ in range(N)
+    ]

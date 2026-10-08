@@ -1,4 +1,5 @@
-from kyber.cbd import cbd_coefficient
+from kyber.cbd import cbd_coefficient, cbd_poly
+from kyber.params import PARAMS
 
 
 def test_cbd_output_range():
@@ -33,3 +34,24 @@ def test_cbd_contains_zero():
     values = [cbd_coefficient(eta=2) for _ in range(1000)]
 
     assert 0 in values
+
+
+def test_cbd_poly_length():
+    """
+    A CBD polynomial must contain exactly N coefficients.
+    """
+
+    poly = cbd_poly(eta=2)
+
+    assert len(poly) == PARAMS.n
+
+
+def test_cbd_poly_coefficients():
+    """
+    Every coefficient of the polynomial must
+    lie between -2 and +2 for eta=2.
+    """
+
+    poly = cbd_poly(eta=2)
+
+    assert all(-2 <= coefficient <= 2 for coefficient in poly)
