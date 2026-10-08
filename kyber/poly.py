@@ -138,3 +138,23 @@ def intt(a):
         result[j] = (result[j] * inv_n) % Q
 
     return result
+
+def ntt_mul(a, b):
+    """
+    Multiply two polynomials using the NTT.
+
+    The extra factor involving PSI accounts for
+    the negacyclic (X^N + 1) transform.
+    """
+    a_ntt = ntt(a)
+    b_ntt = ntt(b)
+
+    product_ntt = [0] * N
+
+    for k in range(N):
+        correction = mod_pow(PSI, -k)
+        product_ntt[k] = (
+            a_ntt[k] * b_ntt[k] * correction
+        ) % Q
+
+    return intt(product_ntt)

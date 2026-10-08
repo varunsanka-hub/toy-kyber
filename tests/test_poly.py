@@ -1,4 +1,4 @@
-from kyber.poly import N, Q, PSI, intt, ntt, schoolbook_mul
+from kyber.poly import N, Q, PSI, intt, ntt, ntt_mul, schoolbook_mul
 
 
 def test_x15_times_x():
@@ -33,4 +33,19 @@ def test_ntt_round_trip():
     recovered = intt(transformed)
 
     assert recovered == original
+
+def test_ntt_mul_matches_schoolbook():
+    a = [0] * N
+    b = [0] * N
+
+    a[0] = 2
+    a[1] = 3
+
+    b[0] = 4
+    b[1] = 5
+
+    expected = schoolbook_mul(a, b)
+    actual = ntt_mul(a, b)
+
+    assert actual == expected
 
