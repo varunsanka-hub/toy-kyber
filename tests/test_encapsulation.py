@@ -78,3 +78,48 @@ def test_encapsulation_uses_fresh_randomness():
     ciphertext2, _ = encapsulate(public_key, message_bits)
 
     assert ciphertext1 != ciphertext2
+
+
+def test_round_trip_for_all_zero_message():
+    public_key, secret_key = keygen()
+    message_bits = [0] * PARAMS.n
+
+    ciphertext, sender_secret = encapsulate(
+        public_key, message_bits
+    )
+    receiver_secret = decapsulate(
+        ciphertext, secret_key
+    )
+
+    assert receiver_secret == sender_secret
+
+
+def test_round_trip_for_all_one_message():
+    public_key, secret_key = keygen()
+    message_bits = [1] * PARAMS.n
+
+    ciphertext, sender_secret = encapsulate(
+        public_key, message_bits
+    )
+    receiver_secret = decapsulate(
+        ciphertext, secret_key
+    )
+
+    assert receiver_secret == sender_secret
+
+
+def test_repeated_encapsulation_decapsulation():
+    message_bits = [0, 1] * (PARAMS.n // 2)
+
+    for _ in range(50):
+        public_key, secret_key = keygen()
+
+        ciphertext, sender_secret = encapsulate(
+            public_key, message_bits
+        )
+
+        receiver_secret = decapsulate(
+            ciphertext, secret_key
+        )
+
+        assert receiver_secret == sender_secret
