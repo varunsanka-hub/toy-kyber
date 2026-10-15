@@ -1,6 +1,6 @@
 
 import pytest
-
+import random
 from kyber.encapsulation import encapsulate
 from kyber.keygen import keygen
 from kyber.params import PARAMS
@@ -227,3 +227,35 @@ def test_residual_noise_stays_within_decoding_margin():
     print(f"Maximum residual distance: {max(distances)}")
 
     assert max(distances) < PARAMS.q // 4
+
+def test_maximum_residual_distance_over_100_trials():
+    random.seed(2026)
+    worst_distance = 0
+    trials = 100
+
+    for _ in range(trials):
+        public_key, secret_key = keygen()
+        message_bits = [
+            random.randint(0, 1) for _ in range(PARAMS.n)
+        ]
+
+        ciphertext, _ = encapsulate(public_key, message_bits)
+        u, v = ciphertext
+
+        secret_product = vector_dot_product(secret_key, u)
+        recovered_poly = sub(v, secret_product)
+        encoded_message = encode_message(message_bits)
+
+        distances = [
+            modular_distance(recovered, encoded, PARAMS.q)
+            for recovered, encoded in zip(
+                recovered_poly, encoded_message
+            )
+        ]
+
+        worst_distance = max(worst_distance, max(distances))
+
+    print(f"\nWorst residual distance over {trials} trials: {worst_distance}")
+    print(f"Decoding boundary: {PARAMS.q // 4}")
+
+    assert worst_distance < PARAMS.q // 4
