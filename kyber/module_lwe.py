@@ -81,3 +81,91 @@ def module_lwe_sample():
         t.append(row_result)
 
     return A, s, e, t
+
+def random_poly_vector():
+    """
+    Generate a vector of K small random polynomials.
+
+    Educational toy helper; not production-secure.
+    """
+    return [cbd_poly() for _ in range(K)]
+
+
+def matrix_vector_mul(A, vector):
+    """
+    Multiply a K x K matrix of polynomials by a
+    vector of K polynomials.
+
+    All polynomial operations are modulo q,
+    in the ring Z_q[X]/(X^N + 1).
+    """
+    result = []
+
+    for i in range(K):
+        row_result = [0] * N
+
+        for j in range(K):
+            product = schoolbook_mul(A[i][j], vector[j])
+            row_result = add(row_result, product)
+
+        result.append(row_result)
+
+    return result
+
+
+def transpose_matrix(A):
+    """
+    Transpose a square K x K matrix of polynomials.
+    """
+    return [
+        [A[j][i] for j in range(K)]
+        for i in range(K)
+    ]
+
+
+def transpose_matrix_vector_mul(A, vector):
+    """
+    Calculate A^T * vector modulo q.
+    """
+    A_transposed = transpose_matrix(A)
+    return matrix_vector_mul(A_transposed, vector)
+
+
+def encapsulation_u(A, r, e1):
+    """
+    Compute u = A^T * r + e1 modulo q.
+    """
+    product = transpose_matrix_vector_mul(A, r)
+
+    return [
+        add(product[i], e1[i])
+        for i in range(K)
+    ]
+
+
+def vector_dot_product(a, b):
+    """
+    Compute the dot product of two polynomial vectors
+    modulo q.
+    """
+    if len(a) != K or len(b) != K:
+        raise ValueError("Vectors must have exactly K polynomials.")
+
+    result = [0] * N
+
+    for i in range(K):
+        product = schoolbook_mul(a[i], b[i])
+        result = add(result, product)
+
+    return result
+
+
+def encapsulation_v(t, r, e2, message):
+    """
+    Compute v = t^T*r + e2 + message modulo q.
+    """
+    result = vector_dot_product(t, r)
+    result = add(result, e2)
+    result = add(result, message)
+
+    return result
