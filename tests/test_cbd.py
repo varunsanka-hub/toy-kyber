@@ -55,3 +55,29 @@ def test_cbd_poly_coefficients():
     poly = cbd_poly(eta=2)
 
     assert all(-2 <= coefficient <= 2 for coefficient in poly)
+
+def test_cbd_coefficient_range():
+    for _ in range(1000):
+        coefficient = cbd_coefficient(eta=2)
+        assert coefficient in (-2, -1, 0, 1, 2)
+
+
+from collections import Counter
+
+
+def test_cbd_distribution_is_reasonable():
+    samples = [cbd_coefficient(eta=2) for _ in range(10000)]
+    counts = Counter(samples)
+
+    # Expected probabilities for eta = 2.
+    expected = {
+        -2: 0.0625,
+        -1: 0.25,
+         0: 0.375,
+         1: 0.25,
+         2: 0.0625,
+    }
+
+    for value, probability in expected.items():
+        observed = counts[value] / len(samples)
+        assert abs(observed - probability) < 0.025

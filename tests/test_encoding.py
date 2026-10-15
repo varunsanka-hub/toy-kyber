@@ -77,3 +77,17 @@ def test_decode_message_recovers_bits_with_noise():
         ]
 
         assert decode_message(noisy) == bits
+
+
+def test_decode_message_with_noise_near_encoded_values():
+    bits = [0, 1] * (PARAMS.n // 2)
+    encoded = encode_message(bits)
+
+    # These perturbations are small compared with q/4.
+    noise = [10 if bit == 0 else -10 for bit in bits]
+    noisy = [
+        (coefficient + perturbation) % PARAMS.q
+        for coefficient, perturbation in zip(encoded, noise)
+    ]
+
+    assert decode_message(noisy) == bits

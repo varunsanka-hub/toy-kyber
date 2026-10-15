@@ -164,3 +164,66 @@ def test_decapsulation_reliability_over_100_trials():
 
     print(f"\nDecapsulation reliability: {successes}/{trials}")
     assert successes == trials
+
+
+def test_decapsulation_recovers_message_repeatedly():
+    for _ in range(100):
+        public_key, secret_key = keygen()
+        message_bits = [
+            random.randint(0, 1) for _ in range(PARAMS.n)
+        ]
+
+        ciphertext, sender_secret = encapsulate(
+            public_key, message_bits
+        )
+        receiver_secret = decapsulate(ciphertext, secret_key)
+
+        assert receiver_secret == sender_secret
+
+from kyber.module_lwe import vector_dot_product
+from kyber.poly import sub
+from kyber.encoding import encode_message
+
+def test_residual_polynomial_has_correct_length():
+    public_key, secret_key = keygen()
+    message_bits = [0, 1] * (PARAMS.n // 2)
+
+    ciphertext, _ = encapsulate(public_key, message_bits)
+    u, v = ciphertext
+
+    secret_product = vector_dot_product(secret_key, u)
+    recovered_poly = sub(v, secret_product)
+
+    assert len(recovered_poly) == PARAMS.n
+    assert all(0 <= coefficient < PARAMS.q for coefficient in recovered_poly)
+
+def modular_distance(a, b, q):
+    """Return the shortest distance between two residues modulo q."""
+    difference = (a - b) % q
+    return min(difference, q - difference)
+
+def test_modular_distance():
+    assert modular_distance(10, 12, PARAMS.q) == 2
+    assert modular_distance(0, PARAMS.q - 1, PARAMS.q) == 1
+    assert modular_distance(100, 100, PARAMS.q) == 0
+
+def test_residual_noise_stays_within_decoding_margin():
+    public_key, secret_key = keygen()
+    message_bits = [0, 1] * (PARAMS.n // 2)
+
+    ciphertext, _ = encapsulate(public_key, message_bits)
+    u, v = ciphertext
+
+    secret_product = vector_dot_product(secret_key, u)
+    recovered_poly = sub(v, secret_product)
+    encoded_message = encode_message(message_bits)
+
+    distances = [
+        modular_distance(recovered, encoded, PARAMS.q)
+        for recovered, encoded in zip(recovered_poly, encoded_message)
+    ]
+
+    print(f"\nResidual coefficient distances: {distances}")
+    print(f"Maximum residual distance: {max(distances)}")
+
+    assert max(distances) < PARAMS.q // 4
