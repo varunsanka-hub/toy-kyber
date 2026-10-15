@@ -68,3 +68,13 @@ def test_multiple_messages_round_trip():
         )
 
         assert receiver_secret == sender_secret
+
+
+def test_encapsulation_uses_fresh_randomness():
+    public_key, _ = keygen()
+    message_bits = [0, 1] * (PARAMS.n // 2)
+
+    ciphertext1, _ = encapsulate(public_key, message_bits)
+    ciphertext2, _ = encapsulate(public_key, message_bits)
+
+    assert ciphertext1 != ciphertext2
