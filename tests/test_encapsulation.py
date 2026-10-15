@@ -4,7 +4,7 @@ import random
 from kyber.encapsulation import encapsulate
 from kyber.keygen import keygen
 from kyber.params import PARAMS
-
+from kyber.poly import N 
 
 def test_encapsulate():
     public_key, _ = keygen()
@@ -259,3 +259,36 @@ def test_maximum_residual_distance_over_100_trials():
     print(f"Decoding boundary: {PARAMS.q // 4}")
 
     assert worst_distance < PARAMS.q // 4
+from kyber.keygen import keygen
+from kyber.encapsulation import encapsulate
+from kyber.decapsulation import decapsulate
+
+
+def test_full_encapsulation_decapsulation_flow():
+    public_key, secret_key = keygen()
+
+    message = [
+        0, 1, 1, 0,
+        1, 0, 0, 1,
+        1, 1, 0, 0,
+        0, 1, 0, 1,
+    ]
+
+    ciphertext, sender_secret = encapsulate(public_key, message)
+    receiver_secret = decapsulate(ciphertext, secret_key)
+
+    assert len(sender_secret) == 32
+    assert len(receiver_secret) == 32
+    assert sender_secret == receiver_secret
+def test_encapsulation_ciphertext_structure():
+    public_key, _ = keygen()
+
+    message = [0, 1] * (N // 2)
+    ciphertext, shared_secret = encapsulate(public_key, message)
+
+    u, v = ciphertext
+
+    assert len(u) == 2
+    assert all(len(poly) == N for poly in u)
+    assert len(v) == N
+    assert len(shared_secret) == 32    

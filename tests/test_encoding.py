@@ -1,9 +1,9 @@
 
 import pytest
 
-from kyber.encoding import encode_message
+from kyber.encoding import encode_message, decode_message
 from kyber.params import PARAMS
-
+from kyber.poly import N 
 
 def test_encode_message():
     bits = [0, 1] * (PARAMS.n // 2)
@@ -26,10 +26,6 @@ def test_encode_message_rejects_invalid_bit():
 
     with pytest.raises(ValueError):
         encode_message(bits)
-
-
-from kyber.encoding import decode_message
-
 
 def test_encode_decode_round_trip():
     bits = [0, 1] * (PARAMS.n // 2)
@@ -91,3 +87,37 @@ def test_decode_message_with_noise_near_encoded_values():
     ]
 
     assert decode_message(noisy) == bits
+
+def test_message_encoding_round_trip():
+    message = [
+        0, 1, 1, 0,
+        1, 0, 0, 1,
+        1, 1, 0, 0,
+        0, 1, 0, 1,
+    ]
+
+    encoded = encode_message(message)
+    decoded = decode_message(encoded)
+
+    assert decoded == message 
+import pytest
+from kyber.encoding import encode_message
+
+
+def test_encode_message_rejects_wrong_length():
+    with pytest.raises(ValueError):
+        encode_message([0, 1, 0])
+
+
+def test_encode_message_rejects_invalid_bits():
+    message = [0] * N
+    message[3] = 2
+
+    with pytest.raises(ValueError):
+        encode_message(message)    
+from kyber.encoding import decode_message
+
+
+def test_decode_message_rejects_wrong_length():
+    with pytest.raises(ValueError):
+        decode_message([0, 1, 2])

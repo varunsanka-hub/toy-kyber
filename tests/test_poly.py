@@ -1,19 +1,20 @@
-from kyber.poly import N, sub, Q, PSI, intt, ntt, ntt_mul, schoolbook_mul
+from kyber.poly import N, normalize, sub, Q, PSI, intt, ntt, ntt_mul, schoolbook_mul
+
 
 
 def test_x15_times_x():
-    a = [0] * 16
-    b = [0] * 16
+    a = [0] * N
+    b = [0] * N
 
-    a[15] = 1
+    a[N - 1] = 1
     b[1] = 1
 
     result = schoolbook_mul(a, b)
 
-    # X^15 * X = X^16 = -1
-    assert result[0] == 3328
+    # X^(N-1) * X = X^N = -1
+    assert result[0] == Q - 1
 
-    for i in range(1, 16):
+    for i in range(1, N):
         assert result[i] == 0
 
 def test_ntt_constant():
@@ -69,3 +70,27 @@ def test_subtraction_all_coefficients():
     result = sub(a, b)
 
     assert result == [7] * N
+import pytest
+from kyber.poly import add, sub
+
+
+def test_add_rejects_wrong_length():
+    with pytest.raises(ValueError):
+        add([1, 2], [3, 4])
+
+
+def test_sub_rejects_wrong_length():
+    with pytest.raises(ValueError):
+        sub([1, 2], [3, 4]) 
+
+def test_schoolbook_mul_rejects_wrong_length():
+    with pytest.raises(ValueError):
+        schoolbook_mul([1, 2], [3, 4])    
+
+def test_normalize_reduces_coefficients_modulo_q():
+    poly = [0, 1, Q, Q + 1, -1, -Q - 1] + [0] * (N - 6)
+
+    result = normalize(poly)
+
+    assert result == [0, 1, 0, 1, Q - 1, Q - 1] + [0] * (N - 6)
+    assert all(0 <= coefficient < Q for coefficient in result)             
