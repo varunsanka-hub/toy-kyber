@@ -142,3 +142,25 @@ def test_random_messages_round_trip():
         receiver_secret = decapsulate(ciphertext, secret_key)
 
         assert receiver_secret == sender_secret
+
+
+def test_decapsulation_reliability_over_100_trials():
+    successes = 0
+    trials = 100
+
+    for _ in range(trials):
+        public_key, secret_key = keygen()
+        message_bits = [
+            random.randint(0, 1) for _ in range(PARAMS.n)
+        ]
+
+        ciphertext, sender_secret = encapsulate(
+            public_key, message_bits
+        )
+        receiver_secret = decapsulate(ciphertext, secret_key)
+
+        if receiver_secret == sender_secret:
+            successes += 1
+
+    print(f"\nDecapsulation reliability: {successes}/{trials}")
+    assert successes == trials
