@@ -149,7 +149,6 @@ def test_module_lwe_key_equation():
 
     # Compute A multiplied by s.
     As = matrix_vector_mul(A, s)
-
     # Add the error vector e.
     expected_t = [
         add(As[i], e[i])
@@ -219,3 +218,25 @@ def test_decapsulation_polynomial_calculation():
     # w = 30 - 23 = 7
     assert recovered_poly[0] == 7
     assert all(x == 0 for x in recovered_poly[1:])    
+import pytest
+from kyber.module_lwe import vector_dot_product
+def test_vector_dot_product_rejects_short_first_vector():
+    a = [cbd_poly()]
+    b = [cbd_poly(), cbd_poly()]
+
+    with pytest.raises(
+        ValueError,
+        match="Vectors must have exactly K polynomials.",
+    ):
+        vector_dot_product(a, b)
+
+
+def test_vector_dot_product_rejects_short_second_vector():
+    a = [cbd_poly(), cbd_poly()]
+    b = [cbd_poly()]
+
+    with pytest.raises(
+        ValueError,
+        match="Vectors must have exactly K polynomials.",
+    ):
+        vector_dot_product(a, b)
