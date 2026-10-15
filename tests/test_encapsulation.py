@@ -123,3 +123,22 @@ def test_repeated_encapsulation_decapsulation():
         )
 
         assert receiver_secret == sender_secret
+
+
+import random
+
+
+def test_random_messages_round_trip():
+    for _ in range(100):
+        public_key, secret_key = keygen()
+
+        message_bits = [
+            random.randint(0, 1) for _ in range(PARAMS.n)
+        ]
+
+        ciphertext, sender_secret = encapsulate(
+            public_key, message_bits
+        )
+        receiver_secret = decapsulate(ciphertext, secret_key)
+
+        assert receiver_secret == sender_secret

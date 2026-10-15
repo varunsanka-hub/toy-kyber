@@ -50,3 +50,30 @@ def test_decode_message_handles_small_noise():
     ]
 
     assert decode_message(noisy) == bits
+
+
+def test_decode_message_recovers_all_zero_bits():
+    bits = [0] * PARAMS.n
+    encoded = encode_message(bits)
+
+    assert decode_message(encoded) == bits
+
+
+def test_decode_message_recovers_all_one_bits():
+    bits = [1] * PARAMS.n
+    encoded = encode_message(bits)
+
+    assert decode_message(encoded) == bits
+
+
+def test_decode_message_recovers_bits_with_noise():
+    bits = [0, 1] * (PARAMS.n // 2)
+    encoded = encode_message(bits)
+
+    for noise in (-10, -2, 2, 10):
+        noisy = [
+            (coefficient + noise) % PARAMS.q
+            for coefficient in encoded
+        ]
+
+        assert decode_message(noisy) == bits

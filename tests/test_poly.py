@@ -1,4 +1,4 @@
-from kyber.poly import N, Q, PSI, intt, ntt, ntt_mul, schoolbook_mul
+from kyber.poly import N, sub, Q, PSI, intt, ntt, ntt_mul, schoolbook_mul
 
 
 def test_x15_times_x():
@@ -49,3 +49,23 @@ def test_ntt_mul_matches_schoolbook():
 
     assert actual == expected
 
+def test_subtraction_wraps_modulo_q():
+    a = [0] * N
+    b = [0] * N
+
+    a[0] = 1
+    b[0] = 2
+
+    result = sub(a, b)
+
+    assert result[0] == Q - 1
+    assert all(coefficient == 0 for coefficient in result[1:])
+
+
+def test_subtraction_all_coefficients():
+    a = [10] * N
+    b = [3] * N
+
+    result = sub(a, b)
+
+    assert result == [7] * N
