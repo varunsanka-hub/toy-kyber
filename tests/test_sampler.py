@@ -1,6 +1,6 @@
 from kyber.sampler import uniform_coefficient, uniform_poly
 from kyber.params import PARAMS
-
+from unittest.mock import patch
 
 def test_uniform_coefficient_range():
     """
@@ -47,3 +47,21 @@ def test_uniform_sampler_varies():
     }
 
     assert len(polys) > 1
+
+def test_uniform_coefficient_can_return_zero():
+    with patch("kyber.sampler.secrets.randbelow", return_value=0) as mocked:
+        value = uniform_coefficient()
+
+    assert value == 0
+    mocked.assert_called_once_with(PARAMS.q)
+
+
+def test_uniform_coefficient_can_return_q_minus_one():
+    with patch(
+        "kyber.sampler.secrets.randbelow",
+        return_value=PARAMS.q - 1,
+    ) as mocked:
+        value = uniform_coefficient()
+
+    assert value == PARAMS.q - 1
+    mocked.assert_called_once_with(PARAMS.q)

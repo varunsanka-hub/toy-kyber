@@ -1,7 +1,7 @@
 
 from kyber.module_lwe import module_lwe_sample, encapsulation_u, encapsulation_v, vector_dot_product, transpose_matrix, transpose_matrix_vector_mul, matrix_vector_mul, K, random_poly_vector, cbd_poly, schoolbook_mul
-from kyber.poly import N, Q, add, sub
-
+from kyber.poly import N, Q, add, sub, ntt_mul
+import random
 def test_module_lwe_sample():
 
     A, s, e, t = module_lwe_sample()
@@ -240,3 +240,151 @@ def test_vector_dot_product_rejects_short_second_vector():
         match="Vectors must have exactly K polynomials.",
     ):
         vector_dot_product(a, b)
+
+def test_module_lwe_key_equation_deterministic():
+    def constant_poly(value):
+        poly = [0] * N
+        poly[0] = value
+        return poly
+
+    zero = constant_poly(0)
+    one = constant_poly(1)
+    two = constant_poly(2)
+    three = constant_poly(3)
+    four = constant_poly(4)
+
+    # A is the 2x2 identity matrix in the polynomial ring.
+    A = [
+        [one, zero],
+        [zero, one],
+    ]
+
+    s = [two, three]
+    e = [one, four]
+
+    # Compute t = A*s + e modulo Q.
+    As = matrix_vector_mul(A, s)
+    t = [add(As[i], e[i]) for i in range(K)]
+
+    assert t == [three, constant_poly(7)]
+
+def test_matrix_vector_mul_matches_ntt_reference():
+    rng = random.Random(2026)
+
+    def random_poly():
+        return [rng.randrange(Q) for _ in range(N)]
+
+    A = [
+        [random_poly() for _ in range(K)]
+        for _ in range(K)
+    ]
+    vector = [random_poly() for _ in range(K)]
+
+    actual = matrix_vector_mul(A, vector)
+
+    # Independently compute A * vector using NTT multiplication.
+    expected = []
+
+    for i in range(K):
+        row_result = [0] * N
+
+        for j in range(K):
+            product = ntt_mul(A[i][j], vector[j])
+            row_result = add(row_result, product)
+
+        expected.append(row_result)
+
+    assert actual == expected
+
+def test_matrix_vector_mul_rejects_invalid_matrix_shape():
+    vector = [[0] * N for _ in range(K)]
+    invalid_matrix = [[[0] * N] for _ in range(K)]
+
+    with pytest.raises(ValueError, match="Matrix must be K x K."):
+        matrix_vector_mul(invalid_matrix, vector)
+def test_vector_dot_product_rejects_invalid_polynomial_length():
+    a = [[0] * N for _ in range(K)]
+    b = [[0] * N for _ in range(K)]
+
+    b[0] = [0] * (N - 1)
+
+    with pytest.raises(
+        ValueError,
+        match="Every polynomial in vector b must have N coefficients."
+    ):
+        vector_dot_product(a, b)
+        
+def test_encapsulation_u_rejects_invalid_error_vector():
+    A = [
+        [[0] * N for _ in range(K)]
+        for _ in range(K)
+    ]
+    r = [[0] * N for _ in range(K)]
+    e1 = [[0] * N for _ in range(K)]
+
+    e1[0] = [0] * (N - 1)
+
+    with pytest.raises(
+        ValueError,
+        match="Every polynomial in e1 must have N coefficients."
+    ):
+        encapsulation_u(A, r, e1)
+
+def test_encapsulation_v_rejects_invalid_message_length():
+    t = [[0] * N for _ in range(K)]
+    r = [[0] * N for _ in range(K)]
+    e2 = [0] * N
+    message = [0] * (N - 1)
+
+    with pytest.raises(
+        ValueError,
+        match="Message must have N coefficients."
+    ):
+        encapsulation_v(t, r, e2, message)
+
+def test_encapsulation_v_matches_manual_polynomial_equation():
+    t = [
+        [1] + [0] * (N - 1),
+        [2] + [0] * (N - 1),
+    ]
+
+    r = [
+        [3] + [0] * (N - 1),
+        [4] + [0] * (N - 1),
+    ]
+
+    e2 = [5] + [0] * (N - 1)
+    message = [6] + [0] * (N - 1)
+
+    expected = vector_dot_product(t, r)
+    expected = add(expected, e2)
+    expected = add(expected, message)
+
+    result = encapsulation_v(t, r, e2, message)
+
+    assert result == expected
+
+def test_decapsulation_calculation_deterministic():
+    # Simple deterministic polynomial vectors.
+    s = [
+        [1] + [0] * (N - 1),
+        [2] + [0] * (N - 1),
+    ]
+
+    u = [
+        [3] + [0] * (N - 1),
+        [4] + [0] * (N - 1),
+    ]
+
+    v = [20] + [0] * (N - 1)
+
+    # Compute s^T * u.
+    shared = vector_dot_product(s, u)
+
+    # Compute v - s^T * u modulo q.
+    recovered = sub(v, shared)
+
+    # 1*3 + 2*4 = 11, so 20 - 11 = 9.
+    expected = [9] + [0] * (N - 1)
+
+    assert recovered == expected

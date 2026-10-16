@@ -1,9 +1,10 @@
+
 """
 Random polynomial sampling for the educational
 toy ML-KEM implementation.
 """
 
-import random
+import secrets
 
 from .params import PARAMS
 
@@ -13,20 +14,12 @@ Q = PARAMS.q
 
 
 def uniform_coefficient():
-    """
-    Generate one uniformly random coefficient
-    in Z_q.
-    """
-
-    return random.randrange(Q)
+    """Generate one uniformly random coefficient in Z_q."""
+    return secrets.randbelow(Q)
 
 
 def uniform_poly():
-    """
-    Generate a polynomial with N coefficients,
-    each uniformly sampled from Z_q.
-    """
-
+    """Generate a polynomial with N coefficients in Z_q."""
     return [
         uniform_coefficient()
         for _ in range(N)

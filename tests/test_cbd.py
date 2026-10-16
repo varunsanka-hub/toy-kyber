@@ -81,3 +81,21 @@ def test_cbd_distribution_is_reasonable():
     for value, probability in expected.items():
         observed = counts[value] / len(samples)
         assert abs(observed - probability) < 0.025
+import pytest
+
+@pytest.mark.parametrize("eta", [0, -1, -2, 1.5, True])
+def test_cbd_coefficient_rejects_invalid_eta(eta):
+    with pytest.raises(ValueError, match="eta must be a positive integer."):
+        cbd_coefficient(eta)
+
+
+def test_cbd_poly_has_expected_length():
+    poly = cbd_poly()
+    assert len(poly) == PARAMS.n
+
+
+def test_cbd_poly_coefficients_within_eta_bounds():
+    eta = 2
+    poly = cbd_poly(eta)
+
+    assert all(-eta <= coefficient <= eta for coefficient in poly)

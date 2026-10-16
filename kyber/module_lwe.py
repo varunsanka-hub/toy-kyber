@@ -91,14 +91,27 @@ def random_poly_vector():
     return [cbd_poly() for _ in range(K)]
 
 
+
 def matrix_vector_mul(A, vector):
     """
-    Multiply a K x K matrix of polynomials by a
-    vector of K polynomials.
-
-    All polynomial operations are modulo q,
-    in the ring Z_q[X]/(X^N + 1).
+    Multiply a K x K matrix of polynomials by a vector
+    of K polynomials in Z_q[X]/(X^N + 1).
     """
+    if len(A) != K or any(len(row) != K for row in A):
+        raise ValueError("Matrix must be K x K.")
+
+    if len(vector) != K:
+        raise ValueError("Vector must contain exactly K polynomials.")
+
+    for row in A:
+        for poly in row:
+            if len(poly) != N:
+                raise ValueError("Every matrix polynomial must have N coefficients.")
+
+    for poly in vector:
+        if len(poly) != N:
+            raise ValueError("Every vector polynomial must have N coefficients.")
+
     result = []
 
     for i in range(K):
@@ -111,7 +124,6 @@ def matrix_vector_mul(A, vector):
         result.append(row_result)
 
     return result
-
 
 def transpose_matrix(A):
     """
@@ -131,25 +143,46 @@ def transpose_matrix_vector_mul(A, vector):
     return matrix_vector_mul(A_transposed, vector)
 
 
-def encapsulation_u(A, r, e1):
-    """
-    Compute u = A^T * r + e1 modulo q.
-    """
-    product = transpose_matrix_vector_mul(A, r)
 
-    return [
-        add(product[i], e1[i])
-        for i in range(K)
-    ]
+def encapsulation_u(A, r, e1):
+    """Compute u = A^T r + e1 with input validation."""
+
+    if len(A) != K or any(len(row) != K for row in A):
+        raise ValueError("Matrix must be K x K.")
+
+    if len(r) != K or len(e1) != K:
+        raise ValueError("Vectors r and e1 must contain exactly K polynomials.")
+
+    for row in A:
+        for poly in row:
+            if len(poly) != N:
+                raise ValueError("Every matrix polynomial must have N coefficients.")
+
+    for poly in r:
+        if len(poly) != N:
+            raise ValueError("Every polynomial in r must have N coefficients.")
+
+    for poly in e1:
+        if len(poly) != N:
+            raise ValueError("Every polynomial in e1 must have N coefficients.")
+
+    product = transpose_matrix_vector_mul(A, r)
+    return [add(product[i], e1[i]) for i in range(K)]
 
 
 def vector_dot_product(a, b):
-    """
-    Compute the dot product of two polynomial vectors
-    modulo q.
-    """
+    """Compute the dot product of two polynomial vectors."""
+
     if len(a) != K or len(b) != K:
         raise ValueError("Vectors must have exactly K polynomials.")
+
+    for poly in a:
+        if len(poly) != N:
+            raise ValueError("Every polynomial in vector a must have N coefficients.")
+
+    for poly in b:
+        if len(poly) != N:
+            raise ValueError("Every polynomial in vector b must have N coefficients.")
 
     result = [0] * N
 
@@ -160,10 +193,27 @@ def vector_dot_product(a, b):
     return result
 
 
+
 def encapsulation_v(t, r, e2, message):
-    """
-    Compute v = t^T*r + e2 + message modulo q.
-    """
+    """Compute v = t^T r + e2 + message with input validation."""
+
+    if len(t) != K or len(r) != K:
+        raise ValueError("Vectors t and r must contain exactly K polynomials.")
+
+    for poly in t:
+        if len(poly) != N:
+            raise ValueError("Every polynomial in t must have N coefficients.")
+
+    for poly in r:
+        if len(poly) != N:
+            raise ValueError("Every polynomial in r must have N coefficients.")
+
+    if len(e2) != N:
+        raise ValueError("Polynomial e2 must have N coefficients.")
+
+    if len(message) != N:
+        raise ValueError("Message must have N coefficients.")
+
     result = vector_dot_product(t, r)
     result = add(result, e2)
     result = add(result, message)
