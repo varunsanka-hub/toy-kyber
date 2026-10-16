@@ -86,26 +86,43 @@ OMEGA = (PSI * PSI) % Q
 
 def ntt(a):
     """
-    Educational Number Theoretic Transform.
+    Evaluate a polynomial at the odd powers of PSI.
 
-    Converts a polynomial from coefficient representation
-    into its NTT representation.
-
-    Uses:
-        A[k] = sum(a[j] * PSI^((2j+1)k)) mod Q
+    This is a direct, educational negacyclic NTT.
     """
     result = [0] * N
 
     for k in range(N):
-        total = 0
+        value = 0
 
         for j in range(N):
-            exponent = (2 * j + 1) * k
-            total += a[j] * mod_pow(PSI, exponent)
+            exponent = j * (2 * k + 1)
+            value += a[j] * mod_pow(PSI, exponent)
 
-        result[k] = total % Q
+        result[k] = value % Q
 
     return result
+
+
+def intt(a):
+    """
+    Recover polynomial coefficients from the NTT evaluations.
+    """
+    result = [0] * N
+    inv_n = mod_inverse(N)
+    inv_psi = mod_inverse(PSI)
+
+    for j in range(N):
+        value = 0
+
+        for k in range(N):
+            exponent = j * (2 * k + 1)
+            value += a[k] * mod_pow(inv_psi, exponent)
+
+        result[j] = (value * inv_n) % Q
+
+    return result
+
 
 def mod_inverse(a):
     """
@@ -113,48 +130,16 @@ def mod_inverse(a):
     """
     return pow(a, Q - 2, Q)
 
-def intt(a):
-    """
-    Educational inverse NTT.
 
-    Recovers the polynomial coefficients from
-    the NTT representation.
-    """
-    result = [0] * N
-    inv_psi = mod_inverse(PSI)
-
-    for j in range(N):
-        total = 0
-
-        for k in range(N):
-            exponent = (2 * j + 1) * k
-            total += a[k] * mod_pow(inv_psi, exponent)
-
-        result[j] = total % Q
-
-    inv_n = mod_inverse(N)
-
-    for j in range(N):
-        result[j] = (result[j] * inv_n) % Q
-
-    return result
 
 def ntt_mul(a, b):
-    """
-    Multiply two polynomials using the NTT.
-
-    The extra factor involving PSI accounts for
-    the negacyclic (X^N + 1) transform.
-    """
+    """Multiply two polynomials using the educational NTT."""
     a_ntt = ntt(a)
     b_ntt = ntt(b)
 
     product_ntt = [0] * N
 
     for k in range(N):
-        correction = mod_pow(PSI, -k)
-        product_ntt[k] = (
-            a_ntt[k] * b_ntt[k] * correction
-        ) % Q
+        product_ntt[k] = (a_ntt[k] * b_ntt[k]) % Q
 
     return intt(product_ntt)

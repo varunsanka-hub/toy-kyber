@@ -17,15 +17,17 @@ def test_x15_times_x():
     for i in range(1, N):
         assert result[i] == 0
 
+
 def test_ntt_constant():
     a = [0] * N
     a[0] = 1
 
     result = ntt(a)
 
-    expected = [pow(PSI, k, Q) for k in range(N)]
+    expected = [1] * N
 
     assert result == expected
+
 
 def test_ntt_round_trip():
     original = [i for i in range(N)]
@@ -93,4 +95,17 @@ def test_normalize_reduces_coefficients_modulo_q():
     result = normalize(poly)
 
     assert result == [0, 1, 0, 1, Q - 1, Q - 1] + [0] * (N - 6)
-    assert all(0 <= coefficient < Q for coefficient in result)             
+    assert all(0 <= coefficient < Q for coefficient in result)    
+def test_ntt_mul_negacyclic_wraparound():
+    a = [0] * N
+    b = [0] * N
+
+    a[N - 1] = 1
+    b[1] = 1
+
+    result = ntt_mul(a, b)
+    expected = schoolbook_mul(a, b)
+
+    assert result == expected
+    assert result[0] == Q - 1
+    assert all(x == 0 for x in result[1:])             
