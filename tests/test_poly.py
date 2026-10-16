@@ -124,3 +124,32 @@ def test_ntt_mul_matches_schoolbook_randomized():
         actual = ntt_mul(a, b)
 
         assert actual == expected
+
+def test_add_then_subtract_recovers_polynomial():
+    a = [((i * 17) + 5) % Q for i in range(N)]
+    b = [((i * 23) + 9) % Q for i in range(N)]
+
+    result = sub(add(a, b), b)
+
+    assert result == a
+
+
+def test_ntt_mul_is_distributive():
+    a = [((i * 7) + 3) % Q for i in range(N)]
+    b = [((i * 11) + 2) % Q for i in range(N)]
+    c = [((i * 13) + 4) % Q for i in range(N)]
+
+    left = ntt_mul(a, add(b, c))
+    right = add(ntt_mul(a, b), ntt_mul(a, c))
+
+    assert left == right
+
+
+def test_ntt_mul_coefficients_are_reduced_modulo_q():
+    a = [Q - 1] * N
+    b = [Q - 1] * N
+
+    result = ntt_mul(a, b)
+
+    assert len(result) == N
+    assert all(0 <= coefficient < Q for coefficient in result)
