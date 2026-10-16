@@ -108,4 +108,19 @@ def test_ntt_mul_negacyclic_wraparound():
 
     assert result == expected
     assert result[0] == Q - 1
-    assert all(x == 0 for x in result[1:])             
+    assert all(x == 0 for x in result[1:])    
+
+import random
+
+
+def test_ntt_mul_matches_schoolbook_randomized():
+    rng = random.Random(42)
+
+    for _ in range(100):
+        a = [rng.randrange(Q) for _ in range(N)]
+        b = [rng.randrange(Q) for _ in range(N)]
+
+        expected = schoolbook_mul(a, b)
+        actual = ntt_mul(a, b)
+
+        assert actual == expected
