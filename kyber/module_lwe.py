@@ -21,75 +21,60 @@ from .poly import add, schoolbook_mul
 K = 2
 N = PARAMS.n
 
-def module_lwe_sample():
+
+def module_lwe_sample(rng=None):
     """
     Generate a toy Module-LWE sample.
 
-    Returns:
+    If rng is supplied, use it for reproducible diagnostics.
+    Otherwise, use the default randomness of the samplers.
 
-        A = 2x2 matrix of random polynomials
-        s = secret vector
-        e = error vector
-        t = A*s + e
+    Returns:
+        A, s, e, t
     """
 
-    # --------------------------------------------------
-    # 1. Generate the matrix A
-    # --------------------------------------------------
-
+    # 1. Generate matrix A
     A = [
-        [uniform_poly(), uniform_poly()],
-        [uniform_poly(), uniform_poly()]
+        [uniform_poly(rng=rng), uniform_poly(rng=rng)],
+        [uniform_poly(rng=rng), uniform_poly(rng=rng)]
     ]
 
-    # --------------------------------------------------
     # 2. Generate secret vector s
-    # --------------------------------------------------
-
     s = [
-        cbd_poly(),
-        cbd_poly()
+        cbd_poly(rng=rng),
+        cbd_poly(rng=rng)
     ]
 
-    # --------------------------------------------------
     # 3. Generate error vector e
-    # --------------------------------------------------
-
     e = [
-        cbd_poly(),
-        cbd_poly()
+        cbd_poly(rng=rng),
+        cbd_poly(rng=rng)
     ]
 
-    # --------------------------------------------------
     # 4. Compute t = A*s + e
-    # --------------------------------------------------
-
     t = []
 
     for i in range(K):
-
         row_result = [0] * N
 
         for j in range(K):
-
             product = schoolbook_mul(A[i][j], s[j])
-
             row_result = add(row_result, product)
 
         row_result = add(row_result, e[i])
-
         t.append(row_result)
 
     return A, s, e, t
 
-def random_poly_vector():
+
+
+def random_poly_vector(rng=None):
     """
     Generate a vector of K small random polynomials.
 
-    Educational toy helper; not production-secure.
+    An optional RNG supports reproducible diagnostics.
     """
-    return [cbd_poly() for _ in range(K)]
-
+    return [cbd_poly(rng=rng) for _ in range(K)]
 
 
 def matrix_vector_mul(A, vector):

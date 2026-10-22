@@ -21,7 +21,7 @@ def _validate_poly(poly, name, centered=False):
             raise ValueError(f"{name} coefficients must be integers.")
 
         if centered:
-            valid = -Q < coefficient < Q
+            valid = -(Q // 2) <= coefficient <= Q // 2
         else:
             valid = 0 <= coefficient < Q
 

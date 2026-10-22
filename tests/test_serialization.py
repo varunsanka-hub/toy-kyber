@@ -254,3 +254,46 @@ def test_rejects_boolean_serialization_version():
 
     with pytest.raises(ValueError, match="Unsupported serialization version"):
         deserialize_secret_key(serialized)
+
+from kyber.serialization import serialize_secret_key
+
+
+def test_secret_key_accepts_centered_range_boundaries():
+    secret_key = [[0] * 16 for _ in range(2)]
+    secret_key[0][0] = -1664
+    secret_key[1][0] = 1664
+
+    serialized = serialize_secret_key(secret_key)
+
+    assert isinstance(serialized, str)
+
+
+def test_secret_key_rejects_value_below_centered_range():
+    secret_key = [[0] * 16 for _ in range(2)]
+    secret_key[0][0] = -1665
+
+    with pytest.raises(ValueError, match="out-of-range"):
+        serialize_secret_key(secret_key)
+
+
+def test_secret_key_rejects_value_above_centered_range():
+    secret_key = [[0] * 16 for _ in range(2)]
+    secret_key[0][0] = 1665
+
+    with pytest.raises(ValueError, match="out-of-range"):
+        serialize_secret_key(secret_key)
+
+def test_secret_key_boundary_values_round_trip():
+    from kyber.serialization import (
+        serialize_secret_key,
+        deserialize_secret_key,
+    )
+
+    secret_key = [[0] * 16 for _ in range(2)]
+    secret_key[0][0] = -1664
+    secret_key[1][0] = 1664
+
+    serialized = serialize_secret_key(secret_key)
+    restored = deserialize_secret_key(serialized)
+
+    assert restored == secret_key

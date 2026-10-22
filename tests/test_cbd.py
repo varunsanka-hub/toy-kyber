@@ -1,6 +1,6 @@
 from kyber.cbd import cbd_coefficient, cbd_poly
 from kyber.params import PARAMS
-
+import random
 
 def test_cbd_output_range():
     """
@@ -99,3 +99,29 @@ def test_cbd_poly_coefficients_within_eta_bounds():
     poly = cbd_poly(eta)
 
     assert all(-eta <= coefficient <= eta for coefficient in poly)
+def test_seeded_cbd_coefficient_is_reproducible():
+    rng1 = random.Random(42)
+    rng2 = random.Random(42)
+
+    assert cbd_coefficient(rng=rng1) == cbd_coefficient(rng=rng2)
+
+
+def test_seeded_cbd_poly_is_reproducible():
+    poly1 = cbd_poly(rng=random.Random(123))
+    poly2 = cbd_poly(rng=random.Random(123))
+
+    assert poly1 == poly2
+
+
+def test_seeded_cbd_poly_has_expected_length_and_range():
+    poly = cbd_poly(eta=2, rng=random.Random(123))
+
+    assert len(poly) == PARAMS.n
+    assert all(-2 <= coefficient <= 2 for coefficient in poly)
+
+
+def test_cbd_coefficient_rejects_boolean_eta():
+    import pytest
+
+    with pytest.raises(ValueError):
+        cbd_coefficient(eta=True)
