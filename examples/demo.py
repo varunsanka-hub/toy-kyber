@@ -1,9 +1,5 @@
 import secrets
-
-from kyber.keygen import keygen
-from kyber.encapsulation import encapsulate
-from kyber.decapsulation import decapsulate
-
+from kyber import keygen, encapsulate, decapsulate
 
 def main():
     print("=" * 55)
