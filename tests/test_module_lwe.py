@@ -388,3 +388,116 @@ def test_decapsulation_calculation_deterministic():
     expected = [9] + [0] * (N - 1)
 
     assert recovered == expected
+
+import pytest
+
+from kyber.module_lwe import (
+    K,
+    N,
+    matrix_vector_mul,
+    encapsulation_u,
+    vector_dot_product,
+    encapsulation_v,
+)
+
+
+def zero_poly():
+    return [0] * N
+
+
+def valid_matrix():
+    return [[zero_poly(), zero_poly()],
+            [zero_poly(), zero_poly()]]
+
+
+def valid_vector():
+    return [zero_poly(), zero_poly()]
+
+
+def test_matrix_vector_mul_rejects_wrong_vector_length():
+    with pytest.raises(ValueError, match="exactly K polynomials"):
+        matrix_vector_mul(valid_matrix(), [zero_poly()])
+
+
+def test_matrix_vector_mul_rejects_wrong_matrix_poly_length():
+    A = valid_matrix()
+    A[0][0] = [0] * (N - 1)
+
+    with pytest.raises(ValueError, match="matrix polynomial"):
+        matrix_vector_mul(A, valid_vector())
+
+
+def test_matrix_vector_mul_rejects_wrong_vector_poly_length():
+    vector = valid_vector()
+    vector[0] = [0] * (N - 1)
+
+    with pytest.raises(ValueError, match="vector polynomial"):
+        matrix_vector_mul(valid_matrix(), vector)
+
+
+def test_encapsulation_u_rejects_wrong_matrix_shape():
+    with pytest.raises(ValueError, match="Matrix must be K x K"):
+        encapsulation_u([[zero_poly()]], valid_vector(), valid_vector())
+
+
+def test_encapsulation_u_rejects_wrong_vector_lengths():
+    with pytest.raises(ValueError, match="exactly K polynomials"):
+        encapsulation_u(valid_matrix(), [zero_poly()], valid_vector())
+
+
+def test_encapsulation_u_rejects_wrong_matrix_poly_length():
+    A = valid_matrix()
+    A[0][0] = [0] * (N - 1)
+
+    with pytest.raises(ValueError, match="matrix polynomial"):
+        encapsulation_u(A, valid_vector(), valid_vector())
+
+
+def test_encapsulation_u_rejects_wrong_r_poly_length():
+    r = valid_vector()
+    r[0] = [0] * (N - 1)
+
+    with pytest.raises(ValueError, match="polynomial in r"):
+        encapsulation_u(valid_matrix(), r, valid_vector())
+
+
+def test_vector_dot_product_rejects_wrong_a_poly_length():
+    a = valid_vector()
+    a[0] = [0] * (N - 1)
+
+    with pytest.raises(ValueError, match="vector a"):
+        vector_dot_product(a, valid_vector())
+
+
+def test_encapsulation_v_rejects_wrong_vector_lengths():
+    with pytest.raises(ValueError, match="exactly K polynomials"):
+        encapsulation_v([zero_poly()], valid_vector(), zero_poly(), zero_poly())
+
+
+def test_encapsulation_v_rejects_wrong_t_poly_length():
+    t = valid_vector()
+    t[0] = [0] * (N - 1)
+
+    with pytest.raises(ValueError, match="polynomial in t"):
+        encapsulation_v(t, valid_vector(), zero_poly(), zero_poly())
+
+
+def test_encapsulation_v_rejects_wrong_r_poly_length():
+    r = valid_vector()
+    r[0] = [0] * (N - 1)
+
+    with pytest.raises(ValueError, match="polynomial in r"):
+        encapsulation_v(valid_vector(), r, zero_poly(), zero_poly())
+
+
+def test_encapsulation_v_rejects_wrong_e2_length():
+    with pytest.raises(ValueError, match="Polynomial e2"):
+        encapsulation_v(valid_vector(), valid_vector(),
+                        [0] * (N - 1), zero_poly())
+
+def test_encapsulation_u_rejects_wrong_e1_poly_length():
+    e1 = valid_vector()
+    e1[0] = [0] * (N - 1)
+
+    with pytest.raises(ValueError, match="polynomial in e1"):
+        encapsulation_u(valid_matrix(), valid_vector(), e1)
