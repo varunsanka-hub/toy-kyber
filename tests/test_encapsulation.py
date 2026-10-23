@@ -292,3 +292,96 @@ def test_encapsulation_ciphertext_structure():
     assert all(len(poly) == N for poly in u)
     assert len(v) == N
     assert len(shared_secret) == 32    
+@pytest.mark.parametrize(
+    "message",
+    [
+        [0, 1, 2] + [0] * (PARAMS.n - 3),
+        [0, -1] + [0] * (PARAMS.n - 2),
+        [0, "1"] + [0] * (PARAMS.n - 2),
+        [False, True] + [0] * (PARAMS.n - 2),
+    ],
+)
+def test_encapsulate_rejects_invalid_message_bits(message):
+    public_key, _ = keygen()
+
+    with pytest.raises(ValueError):
+        encapsulate(public_key, message)
+@pytest.mark.parametrize(
+    "public_key",
+    [
+        None,
+        (),
+        ([], []),
+        ([[[0] * N]], [[0] * N]),
+        (
+            [
+                [[0] * N, [0] * N],
+                [[0] * N, [0] * (N - 1)],
+            ],
+            [[0] * N, [0] * N],
+        ),
+        (
+            [
+                [[0] * N, [0] * N],
+                [[0] * N, [0] * N],
+            ],
+            [[0] * N],
+        ),
+    ],
+)
+def test_encapsulate_rejects_malformed_public_key(public_key):
+    message = [0, 1] * (N // 2)
+
+    with pytest.raises((ValueError, TypeError)):
+        encapsulate(public_key, message) 
+def test_encapsulate_rejects_non_sequence_matrix():
+    public_key = (None, [[0] * N, [0] * N])
+    message = [0, 1] * (N // 2)
+
+    with pytest.raises(ValueError, match="matrix A"):
+        encapsulate(public_key, message)
+
+
+def test_encapsulate_rejects_non_sequence_vector():
+    A = [
+        [[0] * N, [0] * N],
+        [[0] * N, [0] * N],
+    ]
+    public_key = (A, None)
+    message = [0, 1] * (N // 2)
+
+    with pytest.raises(ValueError, match="vector t"):
+        encapsulate(public_key, message) 
+def test_encapsulate_rejects_public_key_with_wrong_container_type():
+    message = [0, 1] * (N // 2)
+
+    with pytest.raises(ValueError, match="Public key"):
+        encapsulate(None, message)
+
+
+def test_encapsulate_rejects_public_key_with_wrong_length():
+    message = [0, 1] * (N // 2)
+
+    with pytest.raises(ValueError, match="Public key"):
+        encapsulate(([],), message) 
+def test_encapsulate_rejects_matrix_row_with_wrong_length():
+    A = [
+        [[0] * N],  # Only one polynomial; K = 2
+        [[0] * N, [0] * N],
+    ]
+    t = [[0] * N, [0] * N]
+
+    with pytest.raises(ValueError, match="Every row of A"):
+        encapsulate((A, t), [0, 1] * (N // 2))
+
+
+def test_encapsulate_rejects_public_vector_polynomial_with_wrong_length():
+    A = [
+        [[0] * N, [0] * N],
+        [[0] * N, [0] * N],
+    ]
+    t = [[0] * N, [0] * (N - 1)]
+
+    with pytest.raises(ValueError, match="Every polynomial in t"):
+        encapsulate((A, t), [0, 1] * (N // 2))
+                                         
