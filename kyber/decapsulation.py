@@ -2,7 +2,34 @@ import hashlib
 
 from .encoding import decode_message
 from .module_lwe import K, N, vector_dot_product
+from .params import PARAMS
 from .poly import sub
+
+
+Q = PARAMS.q
+
+
+def _validate_coefficients(poly, name, centered=False):
+    """Validate polynomial coefficient types and ranges."""
+
+    for coefficient in poly:
+        if (
+            not isinstance(coefficient, int)
+            or isinstance(coefficient, bool)
+        ):
+            raise ValueError(
+                f"{name} coefficients must be integers."
+            )
+
+        if centered:
+            valid = -(Q // 2) <= coefficient <= Q // 2
+        else:
+            valid = 0 <= coefficient < Q
+
+        if not valid:
+            raise ValueError(
+                f"{name} contains an out-of-range coefficient."
+            )
 
 
 def decapsulate(ciphertext, secret_key):
@@ -28,19 +55,38 @@ def decapsulate(ciphertext, secret_key):
 
     for poly in secret_key:
         if not isinstance(poly, (tuple, list)) or len(poly) != N:
-            raise ValueError("Every secret-key polynomial must have N coefficients.")
+            raise ValueError(
+                "Every secret-key polynomial must have N coefficients."
+            )
 
     # Validate ciphertext component u.
     if not isinstance(u, (tuple, list)) or len(u) != K:
-        raise ValueError("Ciphertext component u must contain exactly K polynomials.")
+        raise ValueError(
+            "Ciphertext component u must contain exactly K polynomials."
+        )
 
     for poly in u:
         if not isinstance(poly, (tuple, list)) or len(poly) != N:
-            raise ValueError("Every polynomial in u must have N coefficients.")
+            raise ValueError(
+                "Every polynomial in u must have N coefficients."
+            )
 
     # Validate ciphertext component v.
     if not isinstance(v, (tuple, list)) or len(v) != N:
-        raise ValueError("Ciphertext component v must have N coefficients.")
+        raise ValueError(
+            "Ciphertext component v must have N coefficients."
+        )
+
+    # Validate coefficient types and ranges BEFORE polynomial arithmetic.
+    for i, poly in enumerate(secret_key):
+        _validate_coefficients(
+            poly, f"secret_key[{i}]", centered=True
+        )
+
+    for i, poly in enumerate(u):
+        _validate_coefficients(poly, f"u[{i}]")
+
+    _validate_coefficients(v, "v")
 
     # Recover the encoded message.
     secret_product = vector_dot_product(secret_key, u)

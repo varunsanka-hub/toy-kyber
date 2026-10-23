@@ -89,3 +89,32 @@ def test_decapsulate_rejects_non_list_polynomial_in_u():
         match="Every polynomial in u must have N coefficients",
     ):
         decapsulate(ciphertext, valid_secret_key())
+@pytest.mark.parametrize("bad_coefficient", [True, "1", -1, 3329])
+def test_decapsulate_rejects_invalid_ciphertext_coefficients(
+    bad_coefficient,
+):
+    u = [[0] * N for _ in range(K)]
+    v = [0] * N
+    u[0][0] = bad_coefficient
+
+    ciphertext = (u, v)
+
+    with pytest.raises(ValueError):
+        decapsulate(ciphertext, valid_secret_key())
+
+
+@pytest.mark.parametrize("bad_coefficient", [True, "1", 1665, -1665])
+def test_decapsulate_rejects_invalid_secret_key_coefficients(
+    bad_coefficient,
+):
+    secret_key = valid_secret_key()
+    secret_key[0][0] = bad_coefficient
+
+    ciphertext = (
+        [[0] * N for _ in range(K)],
+        [0] * N,
+    )
+
+    with pytest.raises(ValueError):
+        decapsulate(ciphertext, secret_key)
+        
